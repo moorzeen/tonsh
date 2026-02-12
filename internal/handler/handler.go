@@ -14,26 +14,52 @@ import (
 
 func confirm(prompt string) bool {
 	fmt.Print(prompt)
-
 	reader := bufio.NewReader(os.Stdin)
 	response, _ := reader.ReadString('\n')
 	if strings.TrimSpace(strings.ToLower(response)) != "yes" {
 		fmt.Println("Canceled")
 		return false
 	}
-
 	return true
 }
 
-func confirmOverwrite() bool {
-	if !keychain.KeyExists() {
-		return true
+func selectWallet(wallets []string) (string, error) {
+	fmt.Println("Select wallet:")
+	for i, addr := range wallets {
+		fmt.Printf("  %d. %s\n", i+1, addr)
+	}
+	fmt.Print("> ")
+
+	reader := bufio.NewReader(os.Stdin)
+	input, _ := reader.ReadString('\n')
+	input = strings.TrimSpace(input)
+
+	n, err := strconv.Atoi(input)
+	if err != nil || n < 1 || n > len(wallets) {
+		return "", fmt.Errorf("invalid selection")
+	}
+	return wallets[n-1], nil
+}
+
+func resolveWallet(walletFlag string) (string, error) {
+	if walletFlag != "" {
+		if !keychain.KeyExists(walletFlag) {
+			return "", fmt.Errorf("wallet not found: %s", walletFlag)
+		}
+		return walletFlag, nil
 	}
 
-	fmt.Println("\nWallet already exists in keychain")
-	fmt.Println("WARNING: The next action cannot be undone. Make sure you have saved your seed phrase.")
-
-	return confirm("Overwrite the existing wallet? (yes/no): ")
+	wallets, err := keychain.ListWallets()
+	if err != nil {
+		return "", err
+	}
+	if len(wallets) == 0 {
+		return "", fmt.Errorf("no wallets found\n\nUse 'tonsh create' to create a new wallet.")
+	}
+	if len(wallets) == 1 {
+		return wallets[0], nil
+	}
+	return selectWallet(wallets)
 }
 
 func printTonscanLink(address string, testnet bool) {
@@ -62,10 +88,6 @@ func printInfo(w *wlt.Wallet, balance string, testnet bool) {
 }
 
 func Create(testnet bool) {
-	if !confirmOverwrite() {
-		return
-	}
-
 	seed := wallet.NewSeed()
 	w, err := wlt.CreateWallet(seed, testnet)
 	if err != nil {
@@ -74,28 +96,30 @@ func Create(testnet bool) {
 	}
 
 	seedStr := strings.Join(w.Seed, " ")
-	if err := keychain.SaveKey(seedStr); err != nil {
+	if err := keychain.SaveKey(w.Address, seedStr); err != nil {
 		fmt.Printf("Failed to save key to keychain: %v\n", err)
 		return
 	}
 
 	fmt.Println("\nWallet successfully created and saved in keychain")
 	printInfo(w, strconv.Itoa(0), testnet)
+	fmt.Println("To view your seed phrase, open your system keychain manager and search for \"tonsh\"")
 }
 
-func Info(testnet bool) {
-	seedStr, err := keychain.LoadKey()
+func Info(walletFlag string, testnet bool) {
+	address, err := resolveWallet(walletFlag)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	seedStr, err := keychain.LoadKey(address)
 	if err != nil {
 		fmt.Printf("%v\n", err)
-		fmt.Println("\nUse 'tonsh create' to create a new wallet.")
 		return
 	}
 
 	seed := strings.Fields(seedStr)
-	if len(seed) != 24 {
-		fmt.Printf("invalid seed: expected 24 words, got %d", len(seedStr))
-	}
-
 	w, err := wlt.CreateWallet(seed, testnet)
 	if err != nil {
 		fmt.Printf("Failed to load wallet: %v\n", err)
@@ -103,7 +127,6 @@ func Info(testnet bool) {
 	}
 
 	fmt.Println("\nGet balance...")
-
 	balance, err := w.GetBalance(testnet)
 	if err != nil {
 		fmt.Printf("Failed to get balance: %v\n", err)
@@ -114,22 +137,22 @@ func Info(testnet bool) {
 	printInfo(w, balance, testnet)
 }
 
-func Delete() {
-	if !keychain.KeyExists() {
-		fmt.Println("Wallet doesn't exist in keychain")
+func Delete(walletFlag string) {
+	address, err := resolveWallet(walletFlag)
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 
-	fmt.Println("\nWARNING: This action cannot be undone! Be sure you have saved your seed phrase.")
-	if !confirm("Are you sure you want to delete the wallet from the keychain? (yes/no): ") {
+	fmt.Printf("\nWARNING: This action cannot be undone! Be sure you have saved your seed phrase.\n")
+	if !confirm(fmt.Sprintf("Delete wallet %s? (yes/no): ", address)) {
 		return
 	}
 
-	if err := keychain.DeleteKey(); err != nil {
-		fmt.Printf("Failed to delete wallet from keychain: %v\n", err)
+	if err := keychain.DeleteKey(address); err != nil {
+		fmt.Printf("Failed to delete wallet: %v\n", err)
 		return
 	}
 
 	fmt.Println("\nWallet successfully deleted from keychain")
-	fmt.Println()
 }

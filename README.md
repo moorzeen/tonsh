@@ -1,4 +1,4 @@
-# tonsh
+# TONsh
 
 TON wallet manager for the terminal. Seed phrase is stored in the system keychain — never exposed in the terminal.
 

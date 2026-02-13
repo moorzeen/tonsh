@@ -6,7 +6,7 @@ TON wallet manager for the terminal. Seed phrase is stored in the system keychai
 
 - Manage multiple TON wallets (v3r2)
 - Seed phrases stored securely via system keychain (macOS, Linux, Windows)
-- Interactive wallet selection or `--wallet <address>` flag
+- Interactive mode or direct commands
 - Mainnet and testnet support
 - Balance check via TON network
 
@@ -20,6 +20,15 @@ go install github.com/moorzeen/tonsh/cmd/tonsh@latest
 
 ## Usage
 
+Run without arguments to start interactive mode:
+
+```bash
+tonsh
+tonsh --testnet
+```
+
+Or use commands directly:
+
 ```
 tonsh create                       Create a new wallet
 tonsh info                         Show wallet info (interactive selection if multiple)
@@ -27,20 +36,22 @@ tonsh info --wallet <address>      Show info for a specific wallet
 tonsh delete                       Remove wallet from keychain
 tonsh delete --wallet <address>    Remove a specific wallet
 tonsh version                      Show version
+tonsh help                         Show help
 ```
 
 Add `--testnet` to any command to use testnet:
 
 ```bash
+tonsh create --testnet
 tonsh info --testnet
 ```
 
-Multiple wallets are selected interactively:
+When multiple wallets exist, wallet is selected interactively:
 
 ```
 Select wallet:
-  1. EQD...abc
-  2. EQD...def
+1. EQD...abc
+2. EQD...def
 >
 ```
 

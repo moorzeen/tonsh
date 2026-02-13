@@ -55,7 +55,7 @@ func resolveWallet(walletFlag string) (string, error) {
 		return "", err
 	}
 	if len(wallets) == 0 {
-		return "", fmt.Errorf("no wallets found\n\nUse 'tonsh create' to create a new wallet.")
+		return "", fmt.Errorf("\nno wallets found\n\nUse 'tonsh create' to create a new wallet.")
 	}
 	if len(wallets) == 1 {
 		return wallets[0], nil
@@ -92,7 +92,6 @@ func Interactive(ver string, testnet bool) {
 	if testnet {
 		network = "testnet"
 	}
-	fmt.Println()
 	fmt.Printf("TONsh %s (%s)\n", ver, network)
 	reader := bufio.NewReader(os.Stdin)
 	for {
@@ -117,7 +116,6 @@ func Interactive(ver string, testnet bool) {
 		case "4":
 			fmt.Println()
 			fmt.Println("Bye!")
-			fmt.Println()
 			return
 		default:
 			fmt.Println("Invalid selection")

@@ -27,13 +27,13 @@ func main() {
 	case "delete":
 		handler.Delete(walletFlag)
 	case "version":
-		fmt.Printf("tonsh %s\n", version)
+		fmt.Printf("TONsh %s\n", version)
 	case "help":
 		printUsage()
 	default:
 		fmt.Printf("Unknown command: %s\n\n", command)
 		printUsage()
-		os.Exit(1)
+		os.Exit(0)
 	}
 }
 

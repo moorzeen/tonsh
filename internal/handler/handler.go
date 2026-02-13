@@ -24,9 +24,10 @@ func confirm(prompt string) bool {
 }
 
 func selectWallet(wallets []string) (string, error) {
+	fmt.Println()
 	fmt.Println("Select wallet:")
 	for i, addr := range wallets {
-		fmt.Printf("  %d. %s\n", i+1, addr)
+		fmt.Printf("%d. %s\n", i+1, addr)
 	}
 	fmt.Print("> ")
 
@@ -84,7 +85,6 @@ func printInfo(w *wlt.Wallet, balance string, testnet bool) {
 	fmt.Printf("Version: %s\n", w.Version)
 	printNetwork(testnet)
 	printTonscanLink(w.Address, testnet)
-	fmt.Println()
 }
 
 func Interactive(ver string, testnet bool) {
@@ -92,9 +92,11 @@ func Interactive(ver string, testnet bool) {
 	if testnet {
 		network = "testnet"
 	}
-	fmt.Printf("\nTONsh %s (%s)\n\n", ver, network)
+	fmt.Println()
+	fmt.Printf("TONsh %s (%s)\n", ver, network)
 	reader := bufio.NewReader(os.Stdin)
 	for {
+		fmt.Println()
 		fmt.Println("Select action:")
 		fmt.Println("1. Info")
 		fmt.Println("2. Create")
@@ -113,6 +115,9 @@ func Interactive(ver string, testnet bool) {
 		case "3":
 			Delete("")
 		case "4":
+			fmt.Println()
+			fmt.Println("Bye!")
+			fmt.Println()
 			return
 		default:
 			fmt.Println("Invalid selection")
@@ -134,8 +139,11 @@ func Create(testnet bool) {
 		return
 	}
 
-	fmt.Println("\nWallet successfully created and saved in keychain")
+	fmt.Println()
+	fmt.Println("Wallet successfully created and saved in keychain")
+	fmt.Println()
 	printInfo(w, strconv.Itoa(0), testnet)
+	fmt.Println()
 	fmt.Println("To view your seed phrase, open your system keychain manager and search for \"tonsh\"")
 }
 
@@ -159,14 +167,17 @@ func Info(walletFlag string, testnet bool) {
 		return
 	}
 
-	fmt.Println("\nGet balance...")
+	fmt.Println()
+	fmt.Println("Get balance...")
 	balance, err := w.GetBalance(testnet)
 	if err != nil {
 		fmt.Printf("Failed to get balance: %v\n", err)
 		return
 	}
 
-	fmt.Println("\nWallet info")
+	fmt.Println()
+	fmt.Println("Wallet info")
+	fmt.Println()
 	printInfo(w, balance, testnet)
 }
 
@@ -177,7 +188,8 @@ func Delete(walletFlag string) {
 		return
 	}
 
-	fmt.Printf("\nWARNING: This action cannot be undone! Be sure you have saved your seed phrase.\n")
+	fmt.Println()
+	fmt.Println("WARNING: This action cannot be undone! Be sure you have saved your seed phrase.")
 	if !confirm(fmt.Sprintf("Delete wallet %s? (yes/no): ", address)) {
 		return
 	}
@@ -187,5 +199,6 @@ func Delete(walletFlag string) {
 		return
 	}
 
-	fmt.Println("\nWallet successfully deleted from keychain")
+	fmt.Println()
+	fmt.Println("Wallet successfully deleted from keychain")
 }

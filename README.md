@@ -60,6 +60,19 @@ Select wallet:
 - Seed phrase is never printed to the terminal — stored directly in the system keychain
 - To view your seed phrase, open your system keychain manager and search for `tonsh`
 
+## Development
+
+```bash
+go test ./...
+```
+
+On Linux, install `libsecret-1-dev` first:
+
+```bash
+sudo apt install libsecret-1-dev
+go test ./...
+```
+
 ## Requirements
 
 - Go 1.21+

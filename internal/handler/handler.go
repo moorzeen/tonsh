@@ -87,6 +87,39 @@ func printInfo(w *wlt.Wallet, balance string, testnet bool) {
 	fmt.Println()
 }
 
+func Interactive(ver string, testnet bool) {
+	network := "mainnet"
+	if testnet {
+		network = "testnet"
+	}
+	fmt.Printf("\nTONsh %s (%s)\n\n", ver, network)
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Println("Select action:")
+		fmt.Println("1. Info")
+		fmt.Println("2. Create")
+		fmt.Println("3. Delete")
+		fmt.Println("4. Exit")
+		fmt.Print("> ")
+
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+
+		switch input {
+		case "1":
+			Info("", testnet)
+		case "2":
+			Create(testnet)
+		case "3":
+			Delete("")
+		case "4":
+			return
+		default:
+			fmt.Println("Invalid selection")
+		}
+	}
+}
+
 func Create(testnet bool) {
 	seed := wallet.NewSeed()
 	w, err := wlt.CreateWallet(seed, testnet)

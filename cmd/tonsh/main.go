@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/moorzeen/tonsh/internal/handler"
 )
@@ -10,16 +11,13 @@ import (
 var version = "dev"
 
 func main() {
-	if len(os.Args) < 2 {
-		printUsage()
-		os.Exit(0)
-	}
-
-	command := os.Args[1]
 	testnet := hasFlag("--testnet")
 	walletFlag := getFlagValue("--wallet")
+	command := getCommand()
 
 	switch command {
+	case "":
+		handler.Interactive(version, testnet)
 	case "create":
 		handler.Create(testnet)
 	case "info":
@@ -50,6 +48,27 @@ func printUsage() {
 	fmt.Println("\nFlags:")
 	fmt.Println("  --wallet <addr> Specify wallet address (default: interactive selection)")
 	fmt.Println("  --testnet       Use testnet (default: mainnet)")
+}
+
+// getCommand returns the first non-flag argument (i.e. the subcommand), or ""
+// if none is found (which means interactive mode should be used).
+func getCommand() string {
+	skipNext := false
+	for _, arg := range os.Args[1:] {
+		if skipNext {
+			skipNext = false
+			continue
+		}
+		if arg == "--wallet" {
+			skipNext = true
+			continue
+		}
+		if strings.HasPrefix(arg, "--") {
+			continue
+		}
+		return arg
+	}
+	return ""
 }
 
 func hasFlag(flag string) bool {

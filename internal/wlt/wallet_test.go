@@ -1,6 +1,8 @@
 package wlt
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"testing"
 
 	"github.com/xssnick/tonutils-go/ton/wallet"
@@ -94,6 +96,73 @@ func TestCreateWallet_InvalidSeed(t *testing.T) {
 	_, err := CreateWallet([]string{"invalid", "seed", "words"}, false)
 	if err == nil {
 		t.Error("expected error for invalid seed, got nil")
+	}
+}
+
+func TestImportFromPrivateKey_HexFull(t *testing.T) {
+	seed := wallet.NewSeed()
+	w, err := CreateWallet(seed, false)
+	if err != nil {
+		t.Fatalf("CreateWallet: %v", err)
+	}
+
+	hexKey := hex.EncodeToString(w.PrivateKey)
+	imported, err := ImportFromPrivateKey(hexKey, false)
+	if err != nil {
+		t.Fatalf("ImportFromPrivateKey (hex full): %v", err)
+	}
+	if imported.Address != w.Address {
+		t.Errorf("address mismatch: got %q, want %q", imported.Address, w.Address)
+	}
+}
+
+func TestImportFromPrivateKey_HexSeed(t *testing.T) {
+	seed := wallet.NewSeed()
+	w, err := CreateWallet(seed, false)
+	if err != nil {
+		t.Fatalf("CreateWallet: %v", err)
+	}
+
+	// 32-byte private key seed
+	hexSeed := hex.EncodeToString(w.PrivateKey.Seed())
+	imported, err := ImportFromPrivateKey(hexSeed, false)
+	if err != nil {
+		t.Fatalf("ImportFromPrivateKey (hex seed): %v", err)
+	}
+	if imported.Address != w.Address {
+		t.Errorf("address mismatch: got %q, want %q", imported.Address, w.Address)
+	}
+}
+
+func TestImportFromPrivateKey_Base64(t *testing.T) {
+	seed := wallet.NewSeed()
+	w, err := CreateWallet(seed, false)
+	if err != nil {
+		t.Fatalf("CreateWallet: %v", err)
+	}
+
+	b64Key := base64.StdEncoding.EncodeToString(w.PrivateKey)
+	imported, err := ImportFromPrivateKey(b64Key, false)
+	if err != nil {
+		t.Fatalf("ImportFromPrivateKey (base64): %v", err)
+	}
+	if imported.Address != w.Address {
+		t.Errorf("address mismatch: got %q, want %q", imported.Address, w.Address)
+	}
+}
+
+func TestImportFromPrivateKey_InvalidKey(t *testing.T) {
+	_, err := ImportFromPrivateKey("notavalidkey!!!", false)
+	if err == nil {
+		t.Error("expected error for invalid key, got nil")
+	}
+}
+
+func TestImportFromPrivateKey_WrongLength(t *testing.T) {
+	// Valid hex but wrong length (16 bytes)
+	_, err := ImportFromPrivateKey(hex.EncodeToString(make([]byte, 16)), false)
+	if err == nil {
+		t.Error("expected error for wrong key length, got nil")
 	}
 }
 

@@ -2,10 +2,13 @@ package handler
 
 import (
 	"bufio"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
+
+	"golang.org/x/term"
 
 	"github.com/moorzeen/tonsh/internal/keychain"
 	"github.com/moorzeen/tonsh/internal/wlt"
@@ -99,8 +102,9 @@ func Interactive(ver string, testnet bool) {
 		fmt.Println("Select action:")
 		fmt.Println("1. Info")
 		fmt.Println("2. Create")
-		fmt.Println("3. Delete")
-		fmt.Println("4. Exit")
+		fmt.Println("3. Import")
+		fmt.Println("4. Delete")
+		fmt.Println("5. Exit")
 		fmt.Print("> ")
 
 		input, _ := reader.ReadString('\n')
@@ -112,8 +116,10 @@ func Interactive(ver string, testnet bool) {
 		case "2":
 			Create(testnet)
 		case "3":
-			Delete("")
+			Import(testnet)
 		case "4":
+			Delete("")
+		case "5":
 			fmt.Println()
 			fmt.Println("Bye!")
 			return
@@ -145,6 +151,19 @@ func Create(testnet bool) {
 	fmt.Println("To view your seed phrase, open your system keychain manager and search for \"tonsh\"")
 }
 
+// loadWalletFromKeychain loads a wallet from the keychain by address.
+// The stored value is either a space-separated seed phrase or "privkey:<hex>".
+func loadWalletFromKeychain(address string, testnet bool) (*wlt.Wallet, error) {
+	stored, err := keychain.LoadKey(address)
+	if err != nil {
+		return nil, err
+	}
+	if strings.HasPrefix(stored, "privkey:") {
+		return wlt.ImportFromPrivateKey(strings.TrimPrefix(stored, "privkey:"), testnet)
+	}
+	return wlt.CreateWallet(strings.Fields(stored), testnet)
+}
+
 func Info(walletFlag string, testnet bool) {
 	address, err := resolveWallet(walletFlag)
 	if err != nil {
@@ -152,14 +171,7 @@ func Info(walletFlag string, testnet bool) {
 		return
 	}
 
-	seedStr, err := keychain.LoadKey(address)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
-
-	seed := strings.Fields(seedStr)
-	w, err := wlt.CreateWallet(seed, testnet)
+	w, err := loadWalletFromKeychain(address, testnet)
 	if err != nil {
 		fmt.Printf("Failed to load wallet: %v\n", err)
 		return
@@ -177,6 +189,70 @@ func Info(walletFlag string, testnet bool) {
 	fmt.Println("Wallet info")
 	fmt.Println()
 	printInfo(w, balance, testnet)
+}
+
+func Import(testnet bool) {
+	fmt.Println()
+	fmt.Print("Enter seed phrase or private key: ")
+
+	// Read without echo so the secret is not displayed in the terminal.
+	raw, err := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Println()
+	if err != nil {
+		// Fallback to plain input when stdin is not a terminal (e.g. tests/pipes).
+		reader := bufio.NewReader(os.Stdin)
+		line, _ := reader.ReadString('\n')
+		raw = []byte(strings.TrimSpace(line))
+	}
+
+	input := strings.TrimSpace(string(raw))
+	if input == "" {
+		fmt.Println("Nothing entered")
+		return
+	}
+
+	var w *wlt.Wallet
+	var storedValue string
+
+	words := strings.Fields(input)
+	if len(words) > 1 {
+		// Multiple words → seed phrase
+		w, err = wlt.CreateWallet(words, testnet)
+		if err != nil {
+			fmt.Printf("Failed to import from seed phrase: %v\n", err)
+			return
+		}
+		storedValue = strings.Join(words, " ")
+	} else {
+		// Single token → private key (hex or base64)
+		w, err = wlt.ImportFromPrivateKey(input, testnet)
+		if err != nil {
+			fmt.Printf("Failed to import from private key: %v\n", err)
+			return
+		}
+		storedValue = "privkey:" + hex.EncodeToString(w.PrivateKey)
+	}
+
+	if keychain.KeyExists(w.Address) {
+		fmt.Println()
+		fmt.Printf("Wallet %s is already in keychain\n", w.Address)
+		return
+	}
+
+	if err := keychain.SaveKey(w.Address, storedValue); err != nil {
+		fmt.Printf("Failed to save to keychain: %v\n", err)
+		return
+	}
+
+	fmt.Println()
+	fmt.Println("Wallet successfully imported and saved in keychain")
+	fmt.Println()
+	fmt.Printf("Address: %s\n", w.Address)
+	fmt.Printf("Version: %s\n", w.Version)
+	printNetwork(testnet)
+	printTonscanLink(w.Address, testnet)
+	fmt.Println()
+	fmt.Println("Use 'tonsh info' to check the balance")
 }
 
 func Delete(walletFlag string) {

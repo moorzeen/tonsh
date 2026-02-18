@@ -22,6 +22,8 @@ func main() {
 		handler.Create(testnet)
 	case "info":
 		handler.Info(walletFlag, testnet)
+	case "import":
+		handler.Import(testnet)
 	case "delete":
 		handler.Delete(walletFlag)
 	case "version":
@@ -41,6 +43,7 @@ func printUsage() {
 	fmt.Println("  tonsh <command> [flags]")
 	fmt.Println("\nCommands:")
 	fmt.Println("  create          Create a new TON wallet")
+	fmt.Println("  import          Import a wallet from seed phrase or private key")
 	fmt.Println("  info            Show wallet address, balance, version and network")
 	fmt.Println("  delete          Remove wallet from keychain")
 	fmt.Println("  version         Show version")

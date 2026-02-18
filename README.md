@@ -5,7 +5,9 @@ TON wallet manager for the terminal. Seed phrase is stored in the system keychai
 ## Features
 
 - Manage multiple TON wallets (v3r2)
-- Seed phrases stored securely via system keychain (macOS, Linux, Windows)
+- Create new wallets or import existing ones from seed phrase or private key
+- Seed phrases and private keys stored securely via system keychain (macOS, Linux, Windows)
+- Sensitive input (seed phrase, private key) is never displayed while typing
 - Interactive mode or direct commands
 - Mainnet and testnet support
 - Balance check via TON network
@@ -31,6 +33,7 @@ Or use commands directly:
 
 ```
 tonsh create                       Create a new wallet
+tonsh import                       Import a wallet from seed phrase or private key
 tonsh info                         Show wallet info (interactive selection if multiple)
 tonsh info --wallet <address>      Show info for a specific wallet
 tonsh delete                       Remove wallet from keychain
@@ -55,10 +58,24 @@ Select wallet:
 >
 ```
 
+## Import
+
+`tonsh import` accepts either a **seed phrase** (24 words separated by spaces) or a **private key**:
+
+```
+Enter seed phrase or private key:
+```
+
+The input is hidden while typing. The app detects the format automatically:
+
+- Multiple words → treated as a BIP39 seed phrase
+- Single token → treated as a private key in hex or base64 encoding (32 or 64 bytes)
+
 ## Security
 
-- Seed phrase is never printed to the terminal — stored directly in the system keychain
-- To view your seed phrase, open your system keychain manager and search for `tonsh`
+- Seed phrases and private keys are never displayed in the terminal — stored directly in the system keychain
+- Sensitive input during `import` is hidden while typing (no echo)
+- To view stored secrets, open your system keychain manager and search for `tonsh`
 
 ## Development
 

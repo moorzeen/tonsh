@@ -33,7 +33,7 @@ func main() {
 	default:
 		fmt.Printf("Unknown command: %s\n\n", command)
 		printUsage()
-		os.Exit(0)
+		os.Exit(1)
 	}
 }
 

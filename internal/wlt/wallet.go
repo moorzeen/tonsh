@@ -6,13 +6,18 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"time"
 
 	"github.com/xssnick/tonutils-go/liteclient"
 	"github.com/xssnick/tonutils-go/ton"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 )
 
-const walletVer = wallet.V3R2
+const (
+	walletVer     = wallet.V3R2
+	mainConfigUrl = "https://ton.org/global-config.json"
+	testConfigUrl = "https://ton.org/testnet-global.config.json"
+)
 
 type Wallet struct {
 	Seed       []string
@@ -87,18 +92,16 @@ func decodeKey(keyStr string) ([]byte, error) {
 }
 
 func (w *Wallet) GetBalance(testnet bool) (string, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	var connection *liteclient.ConnectionPool
-	var err error
-
+	configUrl := mainConfigUrl
 	if testnet {
-		connection = liteclient.NewConnectionPool()
-		err = connection.AddConnectionsFromConfigUrl(ctx, "https://ton.org/testnet-global.config.json")
-	} else {
-		connection = liteclient.NewConnectionPool()
-		err = connection.AddConnectionsFromConfigUrl(ctx, "https://ton.org/global-config.json")
+		configUrl = testConfigUrl
 	}
+
+	connection := liteclient.NewConnectionPool()
+	err := connection.AddConnectionsFromConfigUrl(ctx, configUrl)
 	if err != nil {
 		return "", fmt.Errorf("failed to connect to TON network: %v", err)
 	}

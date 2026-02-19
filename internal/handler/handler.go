@@ -85,7 +85,7 @@ func printNetwork(testnet bool) {
 func printInfo(w *wlt.Wallet, balance string, testnet bool) {
 	fmt.Printf("Address: %s\n", w.Address)
 	fmt.Printf("Balance: %s TON\n", balance)
-	fmt.Printf("Version: %s\n", w.Version)
+	fmt.Printf("Version: %v\n", w.Version)
 	printNetwork(testnet)
 	printTonscanLink(w.Address, testnet)
 }
@@ -197,13 +197,13 @@ func Import(testnet bool) {
 
 	// Read without echo so the secret is not displayed in the terminal.
 	raw, err := term.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Println()
 	if err != nil {
 		// Fallback to plain input when stdin is not a terminal (e.g. tests/pipes).
 		reader := bufio.NewReader(os.Stdin)
 		line, _ := reader.ReadString('\n')
 		raw = []byte(strings.TrimSpace(line))
 	}
+	fmt.Println()
 
 	input := strings.TrimSpace(string(raw))
 	if input == "" {

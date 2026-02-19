@@ -20,6 +20,8 @@ const (
 )
 
 type Wallet struct {
+	// Seed is the mnemonic word list used to derive the wallet.
+	// It is nil when the wallet was created from a raw private key.
 	Seed       []string
 	PrivateKey ed25519.PrivateKey
 	PublicKey  ed25519.PublicKey

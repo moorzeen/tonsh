@@ -15,6 +15,8 @@ import (
 	"github.com/xssnick/tonutils-go/ton/wallet"
 )
 
+const privkeyPrefix = "privkey:"
+
 func confirm(prompt string) bool {
 	fmt.Print(prompt)
 	reader := bufio.NewReader(os.Stdin)
@@ -58,7 +60,7 @@ func resolveWallet(walletFlag string) (string, error) {
 		return "", err
 	}
 	if len(wallets) == 0 {
-		return "", fmt.Errorf("\nno wallets found\n\nUse 'tonsh create' to create a new wallet.")
+		return "", fmt.Errorf("no wallets found\n\nUse 'tonsh create' to create a new wallet.")
 	}
 	if len(wallets) == 1 {
 		return wallets[0], nil
@@ -146,7 +148,7 @@ func Create(testnet bool) {
 	fmt.Println()
 	fmt.Println("Wallet successfully created and saved in keychain")
 	fmt.Println()
-	printInfo(w, strconv.Itoa(0), testnet)
+	printInfo(w, "0", testnet)
 	fmt.Println()
 	fmt.Println("To view your seed phrase, open your system keychain manager and search for \"tonsh\"")
 }
@@ -158,8 +160,8 @@ func loadWalletFromKeychain(address string, testnet bool) (*wlt.Wallet, error) {
 	if err != nil {
 		return nil, err
 	}
-	if strings.HasPrefix(stored, "privkey:") {
-		return wlt.ImportFromPrivateKey(strings.TrimPrefix(stored, "privkey:"), testnet)
+	if strings.HasPrefix(stored, privkeyPrefix) {
+		return wlt.ImportFromPrivateKey(strings.TrimPrefix(stored, privkeyPrefix), testnet)
 	}
 	return wlt.CreateWallet(strings.Fields(stored), testnet)
 }
@@ -196,8 +198,8 @@ func Import(testnet bool) {
 	fmt.Print("Enter seed phrase or private key: ")
 
 	// Read without echo so the secret is not displayed in the terminal.
-	raw, err := term.ReadPassword(int(os.Stdin.Fd()))
-	if err != nil {
+	raw, ttyErr := term.ReadPassword(int(os.Stdin.Fd()))
+	if ttyErr != nil {
 		// Fallback to plain input when stdin is not a terminal (e.g. tests/pipes).
 		reader := bufio.NewReader(os.Stdin)
 		line, _ := reader.ReadString('\n')
@@ -213,6 +215,7 @@ func Import(testnet bool) {
 
 	var w *wlt.Wallet
 	var storedValue string
+	var err error
 
 	words := strings.Fields(input)
 	if len(words) > 1 {
@@ -230,7 +233,7 @@ func Import(testnet bool) {
 			fmt.Printf("Failed to import from private key: %v\n", err)
 			return
 		}
-		storedValue = "privkey:" + hex.EncodeToString(w.PrivateKey)
+		storedValue = privkeyPrefix + hex.EncodeToString(w.PrivateKey)
 	}
 
 	if keychain.KeyExists(w.Address) {
@@ -248,7 +251,7 @@ func Import(testnet bool) {
 	fmt.Println("Wallet successfully imported and saved in keychain")
 	fmt.Println()
 	fmt.Printf("Address: %s\n", w.Address)
-	fmt.Printf("Version: %s\n", w.Version)
+	fmt.Printf("Version: %v\n", w.Version)
 	printNetwork(testnet)
 	printTonscanLink(w.Address, testnet)
 	fmt.Println()

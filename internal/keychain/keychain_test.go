@@ -99,7 +99,7 @@ func TestSaveKey_NoDuplicatesInIndex(t *testing.T) {
 	keyring.MockInit()
 
 	addr := "EQD_dup_addr"
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if err := SaveKey(addr, "seed"); err != nil {
 			t.Fatalf("SaveKey iteration %d: %v", i, err)
 		}

@@ -1,6 +1,6 @@
 module github.com/moorzeen/tonsh
 
-go 1.25.5
+go 1.26
 
 require (
 	github.com/xssnick/tonutils-go v1.15.5

@@ -2,6 +2,7 @@ package keychain
 
 import (
 	"errors"
+	"slices"
 	"strings"
 
 	"github.com/zalando/go-keyring"
@@ -59,10 +60,8 @@ func addToIndex(address string) error {
 	if err != nil {
 		return err
 	}
-	for _, w := range wallets {
-		if w == address {
-			return nil
-		}
+	if slices.Contains(wallets, address) {
+		return nil
 	}
 	wallets = append(wallets, address)
 	return keyring.Set(serviceName, indexAccount, strings.Join(wallets, "\n"))

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/moorzeen/tonsh/internal/handler"
@@ -75,12 +76,7 @@ func getCommand() string {
 }
 
 func hasFlag(flag string) bool {
-	for _, arg := range os.Args {
-		if arg == flag {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(os.Args, flag)
 }
 
 func getFlagValue(flag string) string {

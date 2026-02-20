@@ -160,8 +160,8 @@ func loadWalletFromKeychain(address string, testnet bool) (*wlt.Wallet, error) {
 	if err != nil {
 		return nil, err
 	}
-	if strings.HasPrefix(stored, privkeyPrefix) {
-		return wlt.ImportFromPrivateKey(strings.TrimPrefix(stored, privkeyPrefix), testnet)
+	if after, ok := strings.CutPrefix(stored, privkeyPrefix); ok {
+		return wlt.ImportFromPrivateKey(after, testnet)
 	}
 	return wlt.CreateWallet(strings.Fields(stored), testnet)
 }
